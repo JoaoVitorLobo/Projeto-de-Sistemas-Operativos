@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <unistd.h>
+#include <dirent.h>
 
 #define CONTINUE_PLAY 0
 #define NEXT_LEVEL 1
@@ -67,11 +68,26 @@ int play_board(board_t * game_board) {
     return CONTINUE_PLAY;  
 }
 
+int read_line(int file,char* buffer){
+    char c;
+    int i = 0;
+    while(read(file,&c,1) != NULL && c != '\n'){
+        strcat(buffer, &c);
+        i++;
+    }
+    strcat(buffer,'\0');
+    return i;
+}
+
 int main(int argc, char** argv) {
     if (argc != 2) {
         printf("Usage: %s <level_directory>\n", argv[0]);
         // TODO receive inputs
     }
+    char buffer[4096];
+    char** levels;
+
+    levels = malloc(sizeof(board_t));
 
     // Random seed for any random movements
     srand((unsigned int)time(NULL));
@@ -83,6 +99,72 @@ int main(int argc, char** argv) {
     int accumulated_points = 0;
     bool end_game = false;
     board_t game_board;
+
+    struct dirent *entry;
+    DIR *dir;
+
+    dir = opendir(argv[0]);
+    if (dir == NULL) {
+        perror("opendir");
+        return -1;
+    }
+
+    while ((entry = readdir(dir)) != NULL) {
+        // ler o nome dos ficheiros
+        if  ( strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0 ) {
+            continue; // skip . and ..
+        }
+        char *name ;
+        int n_levels, n_monsters, n_pacmans = 0;
+        char* extension;
+        board_t* temp_board = malloc(sizeof(board_t));
+        extension = strrchr(entry->d_name, '.'); //obtem a extensao do ficheiro
+        if(strcmp(extension,".lvl") == 0){
+            n_levels++;
+            char file_path[512];
+            strcpy(file_path, argv[0]);
+            strcat(file_path, "/");
+            strcat(file_path,entry->d_name);
+            int file = open(file_path, "O_RDONLY");
+            if(file < 0){
+                perror("open");
+                return -1;
+            }
+            char c;
+            while (read_line(file, buffer) != 0){
+                int i;
+                if (strncmp(buffer, "DIM", 3) == 0){
+                    sscanf(buffer, "DIM %d %d\n", &temp_board->width, &temp_board->height);
+                }
+                else if (strncmp(buffer, "TEMPO\n", 5) == 0){
+                    sscanf(buffer, "TEMPO %d%n\n", &temp_board->tempo,&i);
+                }
+                else if (strncmp(buffer, "PAC", 3) == 0){
+                    char pacman[256];
+                    i = 3;
+                    int ghost = 0;
+                    while(buffer[i] != '\n'){
+                        sscanf(buffer + i, " %s.p\n %n", pacman,&i);
+                        n_pacmans++;
+                        strcpy(file_path, argv[0]);
+                        strcat(file_path, "/");
+                        strcat(file_path,pacman);
+                        strcpy(temp_board->pacman_file, file_path); // agora basicamente falta ler os fantasmas e os pacs para o board
+                    }
+                    temp_board->n_pacmans = n_pacmans;
+                }
+            }
+            
+
+            //strcpy(temp_board->level_name, entry->d_name); //copia o nome do ficheiro para a estrutura do board
+
+            levels[n_levels-1]= temp_board; //adiciona o nome ao array de strings
+        }
+    }
+
+// Main game loop - precisa da lista de niveis e etc
+
+    
 
     while (!end_game) {
         load_level(&game_board, accumulated_points);
