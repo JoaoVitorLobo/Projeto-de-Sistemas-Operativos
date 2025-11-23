@@ -333,7 +333,7 @@ void kill_pacman(board_t* board, int pacman_index) {
 }
 
 // Static Loading
-int load_pacman(board_t* board, int points) {
+int load_pacman(pacman_t *pacman, char *file_path) {
     board->board[1 * board->width + 1].content = 'P'; // Pacman
     board->pacmans[0].pos_x = 1;
     board->pacmans[0].pos_y = 1;
@@ -343,29 +343,17 @@ int load_pacman(board_t* board, int points) {
 }
 
 // Static Loading
-int load_ghost(board_t* board) {
-    // Ghost 0
-    board->board[3 * board->width + 1].content = 'M'; // Monster
-    board->ghosts[0].pos_x = 1;
-    board->ghosts[0].pos_y = 3;
-    board->ghosts[0].passo = 0;
-    board->ghosts[0].waiting = 0;
-    board->ghosts[0].current_move = 0;
-    board->ghosts[0].n_moves = 16;
-    for (int i = 0; i < 8; i++) {
-        board->ghosts[0].moves[i].command = 'D';
-        board->ghosts[0].moves[i].turns = 1; 
+int load_monster(monster_t *monster, char *file_path) {
+    while (read_line(file, buffer) != 0){
+        if (strncmp(buffer, "PASSO", 5) == 0){
+            sscanf(buffer, "PASSO %d\n", &monster->passo);
+        }
+        else if (strncmp(buffer, "POS", 3) == 0){
+            sscanf(buffer, "POS %d %d\n", &monster->pos_x, &monster->pos_y);
+        }
     }
-    for (int i = 8; i < 16; i++) {
-        board->ghosts[0].moves[i].command = 'A';
-        board->ghosts[0].moves[i].turns = 1; 
-    }
-
-    // Ghost 1
+    //MUITO A ALTERAR
     board->board[2 * board->width + 4].content = 'M'; // Monster
-    board->ghosts[1].pos_x = 4;
-    board->ghosts[1].pos_y = 2;
-    board->ghosts[1].passo = 1;
     board->ghosts[1].waiting = 1;
     board->ghosts[1].current_move = 0;
     board->ghosts[1].n_moves = 1;
