@@ -334,16 +334,32 @@ void kill_pacman(board_t* board, int pacman_index) {
 
 // Static Loading
 int load_pacman(pacman_t *pacman, char *file_path) {
-    board->board[1 * board->width + 1].content = 'P'; // Pacman
-    board->pacmans[0].pos_x = 1;
-    board->pacmans[0].pos_y = 1;
-    board->pacmans[0].alive = 1;
-    board->pacmans[0].points = points;
+    FILE *file = open(file_path, "O_RDONLY");
+    if(file < 0){
+        perror("open");
+        return -1;
+    }
+    char buffer[256];
+    int j=0;
+    while (read_line(file, buffer) != 0){
+        if(strcmp(buffer, "PASSO", 5)){
+            sscanf(buffer, "PASSO %d\n%n", &pacman->passo,&j);
+        }
+        else if (strcmp(buffer, "POS", 3) == 0){
+            sscanf(buffer, "POS %d %d\n%n", &pacman->pos_x, &pacman->pos_y,&j);
+        }
+        else if (buffer[j] == 'W' || buffer[j] == 'A' || buffer[j] == 'S' || buffer[j] == 'D' || buffer[j] == 'R' || buffer[j] == 'T'){
+            sscanf(buffer, "%c\n%n", &pacman->moves[pacman->n_moves].command, &pacman->moves[pacman->n_moves].turns, &j);
+            pacman->moves[pacman->n_moves].turns_left = pacman->moves[pacman->n_moves].turns; 
+            pacman->n_moves += 1;
+
+        }
+    }
     return 0;
 }
 
 // Static Loading
-int load_monster(monster_t *monster, char *file_path) {
+int load_monster(ghost_t *monster, char *file_path) {
     while (read_line(file, buffer) != 0){
         if (strncmp(buffer, "PASSO", 5) == 0){
             sscanf(buffer, "PASSO %d\n", &monster->passo);

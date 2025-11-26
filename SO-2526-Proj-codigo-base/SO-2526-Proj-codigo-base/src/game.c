@@ -97,7 +97,7 @@ int main(int argc, char** argv) {
     bool end_game = false;
 
     board_t game_board;
-    board_t new_board;
+    board_t* new_board;
 
     DIR *dir;
     struct dirent *entry;
@@ -112,7 +112,7 @@ int main(int argc, char** argv) {
     int ghost = 0;
 
     pacman_t* pacman;
-    monster_t* monster;
+    ghost_t* monster;
 
     if (argc != 2) {
         printf("Usage: %s <level_directory>\n", argv[0]);
@@ -175,36 +175,40 @@ int main(int argc, char** argv) {
                     sscanf(buffer, "TEMPO %d\n", &new_board->tempo);
                 }
                 else if (strncmp(buffer, "PAC", 3) == 0){
-                    for (int i = 4; buffer[i] != '\n'; i += 3){
-                        int next_pacman = buffer + i;
-                        sscanf(next_pacman, "%s.p %n", pacman, &i);
-
-                        build_filepath(&file_path, argv[1], pacman);
+                    char pacman_f[256];
+                    int i = 0;
+                    char* next_pacman = buffer + 4;
+                    while(buffer[i] != '\0' && buffer[i] != '\n'){
+                        next_pacman = next_pacman + i;
+                        sscanf(next_pacman, "%s.p%n", pacman_f, &i);
+                        strcat(pacman_f, ".p");
+                        build_filepath(&file_path, argv[1], pacman_f);
 
                         pacman = malloc(sizeof(pacman_t));
                         
                         //strcpy(new_board->pacman_file, file_path); // agora basicamente falta ler os fantasmas e os pacs para o board
                         load_pacman(&pacman, file_path); // agora basicamente falta ler os fantasmas e os pacs para o board
 
-                        new_board->pacmans[n_pacmans++] = pacman;
+                        new_board->pacmans[n_pacmans++] = *pacman;
                     }
                     new_board->n_pacmans = n_pacmans;
                 }
                 else if (strncmp(buffer, "MON", 3) == 0){
-                    for (int i = 4; buffer[i] != '\n'; i += 3){
-                        int next_monster = buffer + i;
-                        sscanf(next_monster, "%s.p %n", monster, &i);
+                    char* next_monster = buffer + 4;
+                    for (int i = 0; buffer[i] != '\n';){
+                        next_monster += i;
+                        sscanf(next_monster, "%s.p%n", monster, &i);
 
                         build_filepath(&file_path, argv[1], monster);
 
-                        monster = malloc(sizeof(monster_t));
+                        monster = malloc(sizeof(ghost_t));
                         
                         //strcpy(new_board->pacman_file, file_path); // agora basicamente falta ler os fantasmas e os pacs para o board
                         load_monster(&monster, file_path); // agora basicamente falta ler os fantasmas e os pacs para o board
 
-                        new_board->monsters[n_monsters++] = monster;
+                        new_board->ghosts[n_monsters++] = *monster;
                     }
-                    new_board->n_monsters = n_monsters;
+                    new_board->n_ghosts = n_monsters;
                 }
                 else if (strncmp(buffer, "X", 1) == 0 || strncmp(buffer, "o", 1) == 0 || strncmp(buffer, "@", 1) == 0){
 
