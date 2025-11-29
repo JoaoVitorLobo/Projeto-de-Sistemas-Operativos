@@ -19,9 +19,29 @@ void screen_refresh(board_t * game_board, int mode) {
         sleep_ms(game_board->tempo);       
 }
 
+bool is_father(board_t *game_board){
+    return getpid() == game_board->pid;
+}
+
+void checkpoint_save(board_t * game_board) {
+    terminal_cleanup();
+    pid = fork();
+    if (pid == 0){
+        terminal_init();
+    }
+    else if (pid > 0){
+        int status;
+        wait(&status);
+        terminal_init();
+    }
+}
+
 int play_board(board_t * game_board) {
-    pacman_t* pacman = &game_board->pacmans[0];
+    pacman_t* pacman = &game_board->pacmans[0];  
     command_t* play;
+
+    int pid;
+    
     if (pacman->n_moves == 0) { // if is user input
         command_t c; 
         c.command = get_input();
@@ -40,6 +60,14 @@ int play_board(board_t * game_board) {
 
     debug("KEY %c\n", play->command);
 
+    if(play->command ==  "G"){
+        if (!is_father(game_board)) 
+            return CONTINUE_PLAY;
+
+        return CREATE_BACKUP;
+    }
+
+
     if (play->command == 'Q') {
         return QUIT_GAME;
     }
@@ -50,7 +78,10 @@ int play_board(board_t * game_board) {
         return NEXT_LEVEL;
     }
 
-    if(result == DEAD_PACMAN) {
+    if(result == DEAD_PACMAN) {      
+        if (!is_father(game_board)){
+            return LOAD_BACKUP;
+        }
         return QUIT_GAME;
     }
     
@@ -61,7 +92,7 @@ int play_board(board_t * game_board) {
         move_ghost(game_board, i, &ghost->moves[ghost->current_move%ghost->n_moves]);
     }
 
-    if (!game_board->pacmans[0].alive) {
+    if (!game_board->pacmans[0].alive) { //colocar todos pacmans
         return QUIT_GAME;
     }      
 
@@ -227,7 +258,7 @@ int main(int argc, char** argv) {
 
 // Main game loop - precisa da lista de niveis e etc
 
-    
+    //game_board->pid = getpid(); !!!!!!!!!!!!!!!!
 
     while (!end_game) {
         load_level(&game_board, accumulated_points);
@@ -248,6 +279,14 @@ int main(int argc, char** argv) {
                 sleep_ms(game_board.tempo);
                 end_game = true;
                 break;
+            }
+            if (result == CREATE_BACKUP){
+                checkpoint_save(game_board);
+                break;
+            }
+            if (result == LOAD_BACKUP){
+                clean_board_memory(game_board);
+                terminal_cleanup();
             }
     
             screen_refresh(&game_board, DRAW_MENU); 

@@ -38,6 +38,6 @@ void refresh_screen();
 /*Ncurses will be reading the player's inputs*/
 char get_input();
 
-void terminal_cleanup();
+void terminal_cleanup(); //no pai, terminal_cleanup() para fechar, abrir/iniciar no filho --> filho morre, reiniciar no pai
 
 #endif
