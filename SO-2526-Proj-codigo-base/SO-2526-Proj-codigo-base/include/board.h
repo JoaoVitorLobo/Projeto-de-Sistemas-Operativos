@@ -57,7 +57,8 @@ typedef struct {
     char pacman_file[256];  // file with pacman movements
     char ghosts_files[MAX_GHOSTS][256]; // files with monster movements
     int tempo;              // Duration of each play XX
-    int pid;
+    int checkpoints;   // Number of checkpoints created
+    //int points;           // Accumulated points from previous levels
 } board_t;
 
 /*Makes the current thread sleep for 'int milliseconds' miliseconds*/
@@ -73,10 +74,10 @@ int move_ghost(board_t* board, int ghost_index, command_t* command);
 void kill_pacman(board_t* board, int pacman_index);
 
 /*Adds a pacman to the board*/
-int load_pacman(board_t* board, int points);
+int load_pacman(pacman_t *pacman, char *file_path);
 
 /*Adds a ghost(monster) to the board*/
-int load_ghost(board_t* board);
+int load_monster(ghost_t *monster, char *file_path);
 
 /*Loads a level into board*/
 int load_level(board_t* board, int accumulated_points);
