@@ -1,12 +1,12 @@
+
 #include "board.h"
-#include "display.h"
 #include <stdlib.h>
+#include <stdio.h>
 #include <time.h>
 #include <unistd.h>
-#include <dirent.h>
-#include <sys/wait.h>
+#include <stdarg.h>
+#include <fcntl.h>
 #include <string.h>
-#include <fcntl.h>   
 
 FILE * debugfile;
 
@@ -21,19 +21,6 @@ static int find_and_kill_pacman(board_t* board, int new_x, int new_y) {
         }
     }
     return VALID_MOVE;
-}
-
-//TIRAR DAQUIIIIII. EU SO QUERO FAZER COMPILAR AGORA
-int read_line(int file, char* buffer){
-    char c;
-    int i = 0;
-    while(read(file,&c,1) > 0 && c != '\n'){
-        strcat(buffer, &c);
-        i++;
-    }
-    //strcat(buffer,'\0'); strcat espera um ponteiro para uma string
-    buffer[i] = '\0'; 
-    return i;
 }
 
 // Helper private function for getting board position index
@@ -350,14 +337,14 @@ void kill_pacman(board_t* board, int pacman_index) {
 
 // Static Loading
 int load_pacman(pacman_t *pacman, char *file_path) {
-    int filed = open(file_path, O_RDONLY);
-    if(filed < 0){
+    int fd = open(file_path, O_RDONLY);
+    if(fd < 0){
         perror("open");
         return -1;
     }
     char buffer[256];
     int j=0;
-    while (read_line(filed, buffer) > 0){
+    while (read_line(fd, buffer) != 0){
         if(strncmp(buffer, "PASSO", 5)){
             sscanf(buffer, "PASSO %d\n%n", &pacman->passo,&j);
         }
@@ -365,13 +352,12 @@ int load_pacman(pacman_t *pacman, char *file_path) {
             sscanf(buffer, "POS %d %d\n%n", &pacman->pos_x, &pacman->pos_y,&j);
         }
         else if (buffer[0] == 'W' || buffer[0] == 'A' || buffer[0] == 'S' || buffer[0] == 'D' || buffer[0] == 'R' || buffer[0] == 'T'){
-            sscanf(buffer, "%c\n", &pacman->moves[pacman->n_moves].command, &pacman->moves[pacman->n_moves].turns);
-            pacman->moves[pacman->n_moves].turns_left = pacman->moves[pacman->n_moves].turns; 
+            pacman->moves[pacman->n_moves].command = buffer[0];
+            pacman->moves[pacman->n_moves].turns = 1;
             pacman->n_moves += 1;
-
         }
     }
-    close(filed);
+    close(fd);
     return 0;
 }
 
@@ -379,8 +365,8 @@ int put_creatures_on_board(board_t *board, int free){
     int placed_pacmans = 0;
     int placed_ghosts = 0;
 
-    while(placed_ghosts<board->n_ghosts){
-        board->content[board->width * board->ghosts[placed_ghosts].pos_y + board->ghosts[placed_ghosts].pos_x].content = 'M';
+    while(placed_ghosts < board->n_ghosts){
+        board->board[board->width * board->ghosts[placed_ghosts].pos_y + board->ghosts[placed_ghosts].pos_x].content = 'M';
         placed_ghosts++;
     }
     while(placed_ghosts<board->n_ghosts && free == 0){
@@ -392,12 +378,13 @@ int put_creatures_on_board(board_t *board, int free){
 
 // Static Loading
 int load_monster(ghost_t *monster, char *file_path) {
-    int filed = open(file_path, O_RDONLY);
-    if(filed < 0){
+    int fd = open(file_path, O_RDONLY);
+    char buffer[256];
+    if(fd < 0){
         perror("open");
         return -1;
     }
-    while (read_line(filed, buffer) > 0){
+    while (read_line(fd, buffer) != 0){
         if (strncmp(buffer, "PASSO", 5) == 0){
             sscanf(buffer, "PASSO %d\n", &monster->passo);
         }
@@ -405,19 +392,19 @@ int load_monster(ghost_t *monster, char *file_path) {
             sscanf(buffer, "POS %d %d\n", &monster->pos_x, &monster->pos_y);
         }
         else if (buffer[0] == 'W' || buffer[0] == 'A' || buffer[0] == 'S' || buffer[0] == 'D' || buffer[0] == 'R' || buffer[0] == 'T'){
-            sscanf(buffer, "%c\n", &pacman->moves[pacman->n_moves].command, &pacman->moves[pacman->n_moves].turns);
-            pacman->moves[pacman->n_moves].turns_left = pacman->moves[pacman->n_moves].turns; 
-            pacman->n_moves += 1;
+            monster->moves[monster->n_moves].command = buffer[0];
+            monster->moves[monster->n_moves].turns = 1;
+            monster->n_moves += 1;
         }
     }
     monster->charged = 0;
     monster->waiting = 0;
     monster->current_move = 0;
-    close(filed);
+    close(fd);
     return 0;
 }
 
-int load_level(board_t *board, int points) {
+/*int load_level(board_t *board, int points) {
     board->height = 5;
     board->width = 10;
     board->tempo = 10;
@@ -452,7 +439,7 @@ int load_level(board_t *board, int points) {
 
     return 0;
 }
-
+*/
 void unload_level(board_t * board) {
     free(board->board);
     free(board->pacmans);
@@ -482,7 +469,7 @@ void print_board(board_t *board) {
         return;
     }
 
-    // Large buffer to load_levumulate the whole output
+    // Large buffer to accumulate the whole output
     char buffer[8192];
     size_t offset = 0;
 

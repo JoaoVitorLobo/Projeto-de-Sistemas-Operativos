@@ -4,9 +4,9 @@
 #include <time.h>
 #include <unistd.h>
 #include <dirent.h>
-#include <sys/wait.h>
 #include <string.h>
-#include <fcntl.h>   
+#include <fcntl.h>
+#include <sys/wait.h>
 
 
 #define CONTINUE_PLAY 0
@@ -44,7 +44,6 @@ void checkpoint_save(board_t *game_board) {
 int play_board(board_t * game_board) {
     pacman_t* pacman = &game_board->pacmans[0];  //ELE SO MEXE NO PACMAN 0!!!!!!!
     command_t* play;
-    
     if (pacman->n_moves == 0) { // if is user input
         command_t c; 
         c.command = get_input();
@@ -64,12 +63,11 @@ int play_board(board_t * game_board) {
     debug("KEY %c\n", play->command);
 
     if(play->command ==  'G'){
-        if (no_checkpoints(game_board)) 
+        if (no_checkpoints(game_board)){
             return CREATE_BACKUP;
-
+        }
         return CONTINUE_PLAY;
     }
-
 
     if (play->command == 'Q') {
         return QUIT_GAME;
@@ -81,7 +79,7 @@ int play_board(board_t * game_board) {
         return NEXT_LEVEL;
     }
 
-    if(result == DEAD_PACMAN) {      
+    if(result == DEAD_PACMAN) {
         if (!no_checkpoints(game_board)){
             return QUIT_GAME;
         }
@@ -95,7 +93,7 @@ int play_board(board_t * game_board) {
         move_ghost(game_board, i, &ghost->moves[ghost->current_move%ghost->n_moves]);
     }
 
-    if (!game_board->pacmans[0].alive) { //colocar todos pacmans
+    if (!game_board->pacmans[0].alive) {
         return QUIT_GAME;
     }      
 
@@ -105,12 +103,11 @@ int play_board(board_t * game_board) {
 int read_line(int file, char* buffer){
     char c;
     int i = 0;
-    while(read(file,&c,1) > 0 && c != '\n'){
-        strcat(buffer, &c);
-        i++;
+    while (read(file, &c, 1) > 0 && c != '\n') {
+        buffer[i++] = c;
     }
-    //strcat(buffer,'\0'); strcat espera um ponteiro para uma string
-    buffer[i] = '\0'; 
+
+    buffer[i] = '\0';
     return i;
 }
 
@@ -118,17 +115,17 @@ bool special_directory(char *d_name){
     return  strcmp(d_name, ".") == 0 || strcmp(d_name, "..") == 0 ;
 }
 
-void build_filepath(char file_path[], char* dir_path, char* d_name){
+void build_filepath(char* file_path, char* dir_path, char* d_name){
     strcpy(file_path, dir_path);
     strcat(file_path, "/");
-    strcat(file_path, d_name);
+    strcat(file_path,d_name);
 }
 
 
 int main(int argc, char** argv) {
     char buffer[4096];
-    board_t** levels;
-    //int accumulated_points = 0;
+    board_t** levels = NULL;
+    int accumulated_points = 0;
     bool end_game = false;
 
     board_t game_board;
@@ -138,17 +135,17 @@ int main(int argc, char** argv) {
     struct dirent *entry;
 
     int n_levels = 0, n_monsters = 0, n_pacmans = 0;
-    int row = 0,free = 0;
 
     char* extension;
 
     int file;
     char file_path[512];
 
-    //int ghost = 0;
-
     pacman_t* pacman;
     ghost_t* monster;
+
+    int row = 0;
+    int free = 0;
 
     if (argc != 2) {
         printf("Usage: %s <level_directory>\n", argv[0]);
@@ -195,7 +192,6 @@ int main(int argc, char** argv) {
                 closedir(dir);
                 return -1;
             }
-
             while (read_line(file, buffer) != 0){
 
                 if (strncmp(buffer, "DIM", 3) == 0){
@@ -209,7 +205,7 @@ int main(int argc, char** argv) {
                     int i = 0;
                     char* next_pacman = buffer + 4;
                     while(buffer[i] != '\0' && buffer[i] != '\n'){
-                        next_pacman = next_pacman + i;
+                        next_pacman += i;
                         sscanf(next_pacman, "%s.p%n", pacman_f, &i);
                         strcat(pacman_f, ".p");
                         build_filepath(file_path, argv[1], pacman_f);
@@ -228,9 +224,11 @@ int main(int argc, char** argv) {
                     int i = 0;
                     char* next_monster = buffer + 4;
                     while(buffer[i] != '\0' && buffer[i] != '\n'){
-                        next_monster = next_monster + i;
+                        next_monster += i;
                         sscanf(next_monster, "%s.m%n", monster_f, &i);
+
                         strcat(monster_f, ".m");
+
                         build_filepath(file_path, argv[1], monster_f);
 
                         monster = (ghost_t*) malloc(sizeof(ghost_t));
@@ -244,13 +242,16 @@ int main(int argc, char** argv) {
                 }
                 else if (strncmp(buffer, "X", 1) == 0 || strncmp(buffer, "o", 1) == 0 || strncmp(buffer, "@", 1) == 0){
                     int x = 0;
-                    while(buffer[x] != '\0' && buffer[x] != '\n'){ ///NAO ENTENDI
+                    while(buffer[x] != '\0' && buffer[x] != '\n'){
                         new_board->board[row * new_board->width + x].content = buffer[x];
                         if (free == 0 && buffer[x] == ' ' && new_board->n_pacmans == 0){
                             free = 1;
                             new_board->board[row * new_board->width + x].content = 'P';
                             new_board->n_pacmans++;
-                            //new_board->pacmans[0] = malloc(sizeof(pacman_t));
+                            pacman = malloc(sizeof(pacman_t));
+                            new_board->pacmans[0].pos_x = x;
+                            new_board->pacmans[0].pos_y = row;
+                            new_board->pacmans[0] = *pacman;
                             new_board->pacmans[0].pos_x = x;
                             new_board->pacmans[0].pos_y = row;
                         }
@@ -260,7 +261,7 @@ int main(int argc, char** argv) {
                 }
             }
             
-            //put_creatures_on_board(new_board,free);
+            put_creatures_on_board(new_board,free);
 
             strcpy(new_board->level_name, entry->d_name); //copia o nome do ficheiro para a estrutura do board
 
@@ -272,10 +273,11 @@ int main(int argc, char** argv) {
 
 // Main game loop - precisa da lista de niveis e etc
 
-    game_board = *new_board;
+    
 
     while (!end_game) {
         int lvl = 0;
+        levels[lvl]->pacmans[0].points = accumulated_points;
         draw_board(levels[lvl], DRAW_MENU);
         refresh_screen();
 
@@ -287,7 +289,7 @@ int main(int argc, char** argv) {
                 sleep_ms(game_board.tempo);
                 lvl++;
                 if (lvl >= n_levels) {
-                    end_game = true;
+                    end_game = true; //se acabarem os levels no filho, o pai tbm precisa acabar
                 }
                 break;
             }
@@ -298,6 +300,7 @@ int main(int argc, char** argv) {
                 end_game = true;
                 break;
             }
+
             if (result == CREATE_BACKUP){
                 checkpoint_save(&game_board);
                 break;
@@ -313,12 +316,11 @@ int main(int argc, char** argv) {
     
             screen_refresh(&game_board, DRAW_MENU); 
 
-            //accumulated_points = game_board.pacmans[0].points;      
+            accumulated_points = game_board.pacmans[0].points;      
         }
         print_board(&game_board);
         unload_level(&game_board);
     }    
-
     //clean_board_memory(game_board);
 
     terminal_cleanup();

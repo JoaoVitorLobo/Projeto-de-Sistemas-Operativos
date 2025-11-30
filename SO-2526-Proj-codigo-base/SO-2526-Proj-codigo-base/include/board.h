@@ -47,18 +47,17 @@ typedef struct {
 } board_pos_t;
 
 typedef struct {
-    int width, height;      // dimensions of the board XX
+    int width, height;      // dimensions of the board
     board_pos_t* board;     // actual board, a row-major matrix
-    int n_pacmans;          // number of pacmans in the board XX
-    pacman_t* pacmans;      // array containing every pacman in the board to iterate through when processing (Just 1) XX
-    int n_ghosts;           // number of ghosts in the board XX
-    ghost_t* ghosts;        // array containing every ghost in the board to iterate through when processing XX
+    int n_pacmans;          // number of pacmans in the board
+    pacman_t* pacmans;      // array containing every pacman in the board to iterate through when processing (Just 1)
+    int n_ghosts;           // number of ghosts in the board
+    ghost_t* ghosts;        // array containing every ghost in the board to iterate through when processing
     char level_name[256];   //name for the level file to keep track of which will be the next
     char pacman_file[256];  // file with pacman movements
     char ghosts_files[MAX_GHOSTS][256]; // files with monster movements
-    int tempo;              // Duration of each play XX
-    int checkpoints;   // Number of checkpoints created
-    //int points;           // Accumulated points from previous levels
+    int tempo;              // Duration of each play
+    int checkpoints;        // number of checkpoints saved
 } board_t;
 
 /*Makes the current thread sleep for 'int milliseconds' miliseconds*/
@@ -73,14 +72,20 @@ int move_ghost(board_t* board, int ghost_index, command_t* command);
 /*Process the death of a Pacman*/
 void kill_pacman(board_t* board, int pacman_index);
 
-/*Adds a pacman to the board*/
-int load_pacman(pacman_t *pacman, char *file_path);
+/*Sets up the pacman for use*/
+int load_pacman(pacman_t* pacman, char* file_path);
+
+/*Sets up the enemies for use*/
+int load_monster(ghost_t* monster, char* file_path);
+
+/*Inserts the enemies and pacman into the visual board*/
+int put_creatures_on_board(board_t* board, int free);
 
 /*Adds a ghost(monster) to the board*/
-int load_monster(ghost_t *monster, char *file_path);
+int load_ghost(board_t* board);
 
 /*Loads a level into board*/
-int load_level(board_t* board, int accumulated_points);
+//int load_level(board_t* board, int accumulated_points);
 
 /*Unloads levels loaded by load_level*/
 void unload_level(board_t * board);
@@ -99,4 +104,6 @@ void debug(const char * format, ...);
 /*Writes the board and its contents to the open debug file*/
 void print_board(board_t* board);
 
+/*Reads a line from an open file*/
+int read_line(int file,char* buffer);
 #endif
