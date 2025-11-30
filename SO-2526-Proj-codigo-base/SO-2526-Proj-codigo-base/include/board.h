@@ -47,17 +47,17 @@ typedef struct {
 } board_pos_t;
 
 typedef struct {
-    int width, height;      // dimensions of the board
-    board_pos_t* board;     // actual board, a row-major matrix
-    int n_pacmans;          // number of pacmans in the board
-    pacman_t* pacmans;      // array containing every pacman in the board to iterate through when processing (Just 1)
-    int n_ghosts;           // number of ghosts in the board
-    ghost_t* ghosts;        // array containing every ghost in the board to iterate through when processing
-    char level_name[256];   //name for the level file to keep track of which will be the next
+    int width, height;      // dimensions of the board XX
+    board_pos_t* board;     // actual board, a row-major matrix YY
+    int n_pacmans;          // number of pacmans in the board XX
+    pacman_t* pacmans;      // array containing every pacman in the board to iterate through when processing (Just 1) XX
+    int n_ghosts;           // number of ghosts in the board XX
+    ghost_t* ghosts;        // array containing every ghost in the board to iterate through when processing XX
+    char level_name[256];   //name for the level file to keep track of which will be the next XX
     char pacman_file[256];  // file with pacman movements
     char ghosts_files[MAX_GHOSTS][256]; // files with monster movements
-    int tempo;              // Duration of each play
-    int checkpoints;        // number of checkpoints saved
+    int tempo;              // Duration of each play XX
+    int checkpoints;        // number of checkpoints saved XX
 } board_t;
 
 /*Makes the current thread sleep for 'int milliseconds' miliseconds*/

@@ -361,19 +361,21 @@ int load_pacman(pacman_t *pacman, char *file_path) {
     return 0;
 }
 
-int put_creatures_on_board(board_t *board, int free){
+int position(int row, int column, int width){
+    return row * width + column;
+}
+
+void put_creatures_on_board(board_t *new_board){
     int placed_pacmans = 0;
     int placed_ghosts = 0;
 
-    while(placed_ghosts < board->n_ghosts){
-        board->board[board->width * board->ghosts[placed_ghosts].pos_y + board->ghosts[placed_ghosts].pos_x].content = 'M';
-        placed_ghosts++;
+    for (int placed_pacmans = 0; placed_pacmans < new_board->n_pacmans; placed_pacmans++){
+        new_board->board[position(new_board->pacmans[placed_pacmans].pos_y, new_board->pacmans[placed_pacmans].pos_x, new_board->width)].content = 'P';
     }
-    while(placed_ghosts<board->n_ghosts && free == 0){
-        board->board[board->width * board->pacmans[placed_pacmans].pos_y + board->pacmans[placed_pacmans].pos_x].content = 'P';
-        placed_pacmans++;
+
+    for (int placed_ghosts = 0; placed_ghosts < new_board->n_ghosts; placed_ghosts++){
+        new_board->board[position(new_board->ghosts[placed_ghosts].pos_y, new_board->ghosts[placed_ghosts].pos_x, new_board->width)].content = 'M';
     }
-    return 0; 
 }
 
 // Static Loading
