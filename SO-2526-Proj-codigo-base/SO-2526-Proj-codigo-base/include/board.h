@@ -79,7 +79,7 @@ int load_pacman(pacman_t* pacman, char* file_path);
 int load_monster(ghost_t* monster, char* file_path);
 
 /*Inserts the enemies and pacman into the visual board*/
-int put_creatures_on_board(board_t* board, int free);
+void put_creatures_on_board(board_t* board);
 
 /*Adds a ghost(monster) to the board*/
 int load_ghost(board_t* board);
@@ -106,4 +106,7 @@ void print_board(board_t* board);
 
 /*Reads a line from an open file*/
 int read_line(int file,char* buffer);
+
+int position(int row, int column, int width);
+
 #endif

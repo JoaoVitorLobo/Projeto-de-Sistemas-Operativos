@@ -125,18 +125,9 @@ void build_filepath(char* file_path, char* dir_path, char* d_name){
     return row * width + column;
 }*/
 
-int create_level(board_t* new_board, char* level_file_path){
+int create_level(board_t* new_level, char* directory,char* level_file_path){
     char buffer[4096];
-
-    char pacman_f[256];
-    char* next_pacman;
-    pacman_t* pacman;
-
-    char monster_f[256];
-    char* next_monster;
-    ghost_t* monster;
-
-    int char_read = 0;
+    char file_path[512];  
 
     int column = 0, row = 0;
 
@@ -148,71 +139,106 @@ int create_level(board_t* new_board, char* level_file_path){
         return -1;
     }
 
+    /* Ensure dynamic arrays and counters are in a known default state */
+    new_level->board   = NULL;
+    new_level->pacmans = NULL;
+    new_level->ghosts  = NULL;
+    new_level->n_pacmans = 0;
+    new_level->n_ghosts  = 0;
+    new_level->tempo = 0;
+    new_level->checkpoints = 0;
+    
     while (read_line(level_file, buffer) != 0){
+        printf("LINE: \"%s\"\n", buffer);
+        //if (strncmp(buffer, "DIM", 3) == 0){  ###
         if (strncmp(buffer, "DIM", 3) == 0){
-            sscanf(buffer, "DIM %d %d\n", &new_board->width, &new_board->height);
-            new_board->board = malloc(sizeof(board_pos_t) * new_board->height * new_board->width);
+            sscanf(buffer, "DIM %d %d\n", &new_level->width, &new_level->height);
+            new_level->board = malloc(sizeof(board_pos_t) * new_level->height * new_level->width);
+            //printf("DIM %d %d\n", new_level->width, new_level->height);
         }
+        
         else if (strncmp(buffer, "TEMPO", 5) == 0){
-            sscanf(buffer, "TEMPO %d\n", &new_board->tempo);
+            sscanf(buffer, "TEMPO %d\n", &new_level->tempo);
+            //printf("TEMPO %d\n", new_level->tempo);
         }
-        else if (strncmp(buffer, "PAC", 3) == 0){
-            char_read = 0;
-            next_pacman = buffer + 4;
 
+        else if (strncmp(buffer, "PAC", 3) == 0) {
             no_pacman = false;
 
-            while(buffer[char_read] != '\0' && buffer[char_read] != '\n'){
-                next_pacman += char_read;
+            char* next_pacman = NULL;
 
-                sscanf(next_pacman, "%[^.].p%n", pacman_f, &char_read);
-                strcat(pacman_f, ".p");
-                build_filepath(file_path, argv[1], pacman_f);
+            //alterar esse nome token
+            char* token = strtok_r(buffer + 4, " \t\n", &next_pacman);
 
-                pacman = (pacman_t*) malloc(sizeof(pacman_t));
-                
-                load_pacman(pacman, file_path);
+            while (token != NULL) {
 
-                new_board->pacmans = realloc(new_board->pacmans, sizeof(pacman_t*) * (new_board->n_pacmans + 1));
+                char pacman_f[256];
+                snprintf(pacman_f, sizeof(pacman_f), "%s", token);
 
-                strcpy(new_board->pacman_file, pacman_f);
-                new_board->pacmans[new_board->n_pacmans++] = pacman;
+            
+                printf("PACMAN FILENAME: %s\n", pacman_f);
+
+                build_filepath(file_path, directory, pacman_f);
+
+                pacman_t pacman = {0};
+                //load_pacman(&pacman, file_path);
+
+                new_level->pacmans = realloc(
+                    new_level->pacmans,
+                    sizeof(pacman_t) * (new_level->n_pacmans + 1)
+                );
+
+                strcpy(new_level->pacman_file, pacman_f);
+                new_level->pacmans[new_level->n_pacmans++] = pacman;
+
+                token = strtok_r(NULL, " \t\n", &next_pacman);
             }
         }
+
         else if (strncmp(buffer, "MON", 3) == 0){
-            char_read = 0;
-            next_monster = buffer + 4;
-            while(buffer[char_read] != '\0' && buffer[char_read] != '\n'){
-                next_monster += char_read;
+            char* next_monster = NULL;
 
-                sscanf(next_monster, "%[^.].m%n", monster_f, &char_read);
-                strcat(monster_f, ".m");
-                build_filepath(file_path, argv[1], monster_f);
+            char* token = strtok_r(buffer + 4, " \t\n", &next_monster);
 
-                monster = (ghost_t*) malloc(sizeof(ghost_t));
+            while(token != NULL){
+                char monster_f[256];
+
+                snprintf(monster_f, sizeof(monster_f), "%s", token);
+            
+                printf("MONSTER FILENAME: %s\n", monster_f);
+
+                build_filepath(file_path, directory, monster_f);
+
+                /* default-initialize all fields to zero/defaults */
+                ghost_t monster = {0};
                 
-                load_monster(monster, file_path); 
+                //load_monster(&monster, file_path); 
 
-                new_board->ghosts = realloc(new_board->ghosts, sizeof(ghost_t*) * (new_board->n_ghosts + 1));
+                new_level->ghosts = realloc(new_level->ghosts, sizeof(ghost_t) * (new_level->n_ghosts + 1));
 
-                strcpy(new_board->ghosts_files[new_board->n_ghosts], monster_f);
-                new_board->ghosts[new_board->n_ghosts++] = *monster;
+                strcpy(new_level->ghosts_files[new_level->n_ghosts], monster_f);
+                new_level->ghosts[new_level->n_ghosts++] = monster;
+
+                token = strtok_r(NULL, " \t\n", &next_monster);
             }  
+            //printf("pos monster pre board\n");
         }
         else if (strncmp(buffer, "X", 1) == 0 || strncmp(buffer, "o", 1) == 0 || strncmp(buffer, "@", 1) == 0){
+            column = 0;
             while(buffer[column] != '\0' && buffer[column] != '\n'){
 
-                new_board->board[position(row, column, new_board->width)].content = buffer[column];
+                new_level->board[position(row, column, new_level->width)].content = buffer[column];
                 
                 if (no_pacman && buffer[column] == 'o'){
-                    pacman = malloc(sizeof(pacman_t));
+                    pacman_t pacman = {0};
 
-                    pacman->pos_x = column;
-                    pacman->pos_y = row;
-                    pacman->alive = 1;
+                    pacman.pos_x = column;
+                    pacman.pos_y = row;
+                    pacman.alive = 1;
 
-                    new_board->n_pacmans++;
-                    new_board->pacmans[0] = pacman;
+                    /* append this pacman to the level's pacmans array */
+                    new_level->pacmans = realloc(new_level->pacmans, sizeof(pacman_t) * (new_level->n_pacmans + 1));
+                    new_level->pacmans[new_level->n_pacmans++] = pacman;
 
                     no_pacman = false;
                 }
@@ -222,49 +248,32 @@ int create_level(board_t* new_board, char* level_file_path){
             row++;
         }
     }
-    
-    put_creatures_on_board(new_board,free);
-
-    strcpy(new_board->level_name, file_entry->d_name); //copia o nome do ficheiro para a estrutura do board
-
-    levels = realloc(levels, n_levels * sizeof(board_t*)); //realoca o array de strings para adicionar mais um nivel
-
-    levels[n_levels-1]= new_board; //adiciona o nome ao array de strings
 
     return 0;
 }
 
 
 int main(int argc, char** argv) {
-    char buffer[4096];
-    board_t** levels = NULL;
+    board_t* levels = NULL;
     int accumulated_points = 0;
     bool end_game = false;
+    int curr_lvl = 0;
 
     board_t game_board;
-    board_t* new_board;
 
     DIR *dir;
     struct dirent *file_entry;
 
-    int n_levels = 0, n_monsters = 0, n_pacmans = 0;
+    int n_levels = 0; // checkpoints = 0;
 
     char* extension;
 
-    int file;
     char file_path[512];
-
-    pacman_t* pacman;
-    ghost_t* monster;
-
-    int row = 0;
-    int free = 0;
-
-    /*---------------------------------------------------------------------*/
+    
 
     if (argc != 2) {
         printf("Usage: %s <level_directory>\n", argv[0]);
-        // TODO receive inputs
+        return -1;
     }
 
     // Random seed for any random movements
@@ -272,9 +281,7 @@ int main(int argc, char** argv) {
 
     open_debug_file("debug.log");
 
-    terminal_init();
-
-    //new_board = malloc(sizeof(board_t));
+    terminal_init(); 
 
     dir = opendir(argv[1]);
 
@@ -291,41 +298,44 @@ int main(int argc, char** argv) {
             continue; // skip . and ..
         }
 
-        new_board = malloc(sizeof(board_t));
         extension = strrchr(file_entry->d_name, '.'); //obtem a extensao do ficheiro
 
         if (extension == NULL){
             continue;
         }
         else if(strcmp(extension,".lvl") == 0){
+
             build_filepath(file_path, argv[1], file_entry->d_name);
 
-            new_board = (board_t*) malloc(sizeof(board_t));
+            board_t new_level = {0};
 
-            if(create_level(&new_board, file_path) < 0){
+
+            if(create_level(&new_level, argv[1], file_path) < 0){
                 perror("open");
                 closedir(dir);
                 return -1;
     }
 
-            put_creatures_on_board(new_board);
+            put_creatures_on_board(&new_level);
 
-            strcpy(new_board->level_name, file_entry->d_name); //copia o nome do ficheiro para a estrutura do board
+            strcpy(new_level.level_name, file_entry->d_name); //copia o nome do ficheiro para a estrutura do board
 
-            levels = realloc(levels, (n_levels + 1) * sizeof(board_t*)); //realoca o array de strings para adicionar mais um nivel
+            levels = realloc(levels, (n_levels + 1) * sizeof(board_t)); //realoca o array de strings para adicionar mais um nivel
 
-            levels[n_levels++] = new_board; //adiciona o nome ao array de strings
+            levels[n_levels++] = new_level; //adiciona o nome ao array de strings
         }
     }
 
-// Main game loop - precisa da lista de niveis e etc
 
-    close(dir);
+
+
+    closedir(dir);
 
     while (!end_game) {
-        int lvl = 0;
-        levels[lvl]->pacmans[0].points = accumulated_points;
-        draw_board(levels[lvl], DRAW_MENU);
+        game_board = levels[curr_lvl];
+        game_board.pacmans[0].points = accumulated_points;
+        //game_board.checkpoints = checkpoints;
+        draw_board(&game_board, DRAW_MENU);
         refresh_screen();
 
         while(true) {
@@ -334,8 +344,8 @@ int main(int argc, char** argv) {
             if(result == NEXT_LEVEL) {
                 screen_refresh(&game_board, DRAW_WIN);
                 sleep_ms(game_board.tempo);
-                lvl++;
-                if (lvl >= n_levels) {
+                curr_lvl++;
+                if (curr_lvl >= n_levels) {
                     end_game = true; //se acabarem os levels no filho, o pai tbm precisa acabar
                 }
                 break;
@@ -353,8 +363,6 @@ int main(int argc, char** argv) {
                 break;
             }
             if (result == LOAD_BACKUP){
-                //lean_board_memory(game_board);
-                //terminal_cleanup();
                 screen_refresh(&game_board, DRAW_GAME_OVER); 
                 sleep_ms(game_board.tempo);
                 end_game = true;
@@ -366,9 +374,12 @@ int main(int argc, char** argv) {
             accumulated_points = game_board.pacmans[0].points;      
         }
         print_board(&game_board);
-        unload_level(&game_board);
     }    
-    //clean_board_memory(game_board);
+
+    for (int i = 0; i < n_levels; i++) {
+        unload_level(&levels[i]);
+    }
+    free(levels);
 
     terminal_cleanup();
 

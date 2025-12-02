@@ -366,9 +366,6 @@ int position(int row, int column, int width){
 }
 
 void put_creatures_on_board(board_t *new_board){
-    int placed_pacmans = 0;
-    int placed_ghosts = 0;
-
     for (int placed_pacmans = 0; placed_pacmans < new_board->n_pacmans; placed_pacmans++){
         new_board->board[position(new_board->pacmans[placed_pacmans].pos_y, new_board->pacmans[placed_pacmans].pos_x, new_board->width)].content = 'P';
     }
