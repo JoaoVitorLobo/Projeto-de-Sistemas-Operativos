@@ -1,6 +1,6 @@
 DIM 10 10
 TEMPO 10
-PAC pacman1.p
+#PAC pacman1.p
 MON monster1.m monster2.m
 XXXXXXXXXX
 XooooooooX

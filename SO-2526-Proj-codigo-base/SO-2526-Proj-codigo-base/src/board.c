@@ -343,16 +343,15 @@ int load_pacman(pacman_t *pacman, char *file_path) {
         return -1;
     }
     char buffer[256];
-    int j=0;
     while (read_line(fd, buffer) != 0){
         if(strncmp(buffer, "PASSO", 5)){
-            sscanf(buffer, "PASSO %d\n%n", &pacman->passo,&j);
+            sscanf(buffer, "PASSO %d\n", &pacman->passo);
         }
         else if (strncmp(buffer, "POS", 3) == 0){
-            sscanf(buffer, "POS %d %d\n%n", &pacman->pos_x, &pacman->pos_y,&j);
+            sscanf(buffer, "POS %d %d\nd", &pacman->pos_x, &pacman->pos_y);
         }
         else if (buffer[0] == 'W' || buffer[0] == 'A' || buffer[0] == 'S' || buffer[0] == 'D' || buffer[0] == 'R' || buffer[0] == 'T'){
-            pacman->moves[pacman->n_moves].command = buffer[0];
+            pacman->moves[pacman->n_moves].command = buffer[0];//comando nem sempre vai estar no 0, ex: T 2
             pacman->moves[pacman->n_moves].turns = 1;
             pacman->n_moves += 1;
         }
@@ -368,6 +367,7 @@ int position(int row, int column, int width){
 void put_creatures_on_board(board_t *new_board){
     for (int placed_pacmans = 0; placed_pacmans < new_board->n_pacmans; placed_pacmans++){
         new_board->board[position(new_board->pacmans[placed_pacmans].pos_y, new_board->pacmans[placed_pacmans].pos_x, new_board->width)].content = 'P';
+        new_board->board[position(new_board->pacmans[placed_pacmans].pos_y, new_board->pacmans[placed_pacmans].pos_x, new_board->width)].has_dot = 0;
     }
 
     for (int placed_ghosts = 0; placed_ghosts < new_board->n_ghosts; placed_ghosts++){
