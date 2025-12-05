@@ -313,6 +313,7 @@ int main(int argc, char** argv) {
     char* extension;
 
     int end_state = CONTINUE_PLAY;
+    int draw_state = DRAW_MENU;
     
 
     if (argc != 2) {
@@ -388,21 +389,25 @@ int main(int argc, char** argv) {
             int result = play_board(&game_board, &checkpoints); 
 
             if(result == NEXT_LEVEL) {
-                screen_refresh(&game_board, DRAW_WIN);
                 sleep_ms(game_board.tempo);
                 curr_lvl++;
                 if (curr_lvl >= n_levels) {
                     end_game = true; //se acabarem os levels no filho, o pai tbm precisa acabar
                     end_state = GAME_WON;
+                    draw_state = DRAW_WIN;
+                    screen_refresh(&game_board, draw_state);
                 }
                 break;
             }
 
             if(result == QUIT_GAME) {
-                screen_refresh(&game_board, DRAW_GAME_OVER); 
-                sleep_ms(game_board.tempo);
+                draw_state = DRAW_GAME_OVER;
                 end_game = true;
                 end_state = QUIT_GAME;
+                if (no_checkpoints(&checkpoints)){
+                    sleep_ms(game_board.tempo);
+                    screen_refresh(&game_board, DRAW_GAME_OVER);
+                }
                 break;
             }
 
@@ -414,14 +419,14 @@ int main(int argc, char** argv) {
                 break;
             }
             if (result == LOAD_BACKUP){
-                screen_refresh(&game_board, DRAW_GAME_OVER); 
+                draw_state = DRAW_GAME_OVER;
                 sleep_ms(game_board.tempo);
                 end_game = true;
                 end_state = LOAD_BACKUP;
                 break;
             }
     
-            screen_refresh(&game_board, DRAW_MENU); 
+            screen_refresh(&game_board, draw_state); 
 
             accumulated_points = game_board.pacmans[0].points;      
         }
@@ -433,6 +438,7 @@ int main(int argc, char** argv) {
     }
     free(levels);
 
+    sleep_ms(1000); // wait a bit before closing to see final state
     terminal_cleanup();
 
     close_debug_file();

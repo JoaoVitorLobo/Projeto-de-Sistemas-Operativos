@@ -262,6 +262,7 @@ int move_ghost(board_t* board, int ghost_index, command_t* command) {
             new_y--;
             break;
         case 'S': // Down
+            //printf("DOWN\n");
             new_y++;
             break;
         case 'A': // Left
@@ -275,6 +276,7 @@ int move_ghost(board_t* board, int ghost_index, command_t* command) {
             ghost->charged = 1;
             return VALID_MOVE;
         case 'T': // Wait
+            //printf("WAIT\n");
             if (command->turns_left == 1) {
                 ghost->current_move += 1; // move on
                 command->turns_left = command->turns;
@@ -345,7 +347,7 @@ int load_pacman(pacman_t *pacman, char *file_path) {
     }
     char buffer[256];
     while (read_line(fd, buffer) != 0){
-        printf("PACMAN LINE: %s\n", buffer);
+        //printf("PACMAN LINE: %s\n", buffer);
         if (strncmp(buffer, "#", 1) == 0){
             continue; // Skip comment lines
         }
@@ -354,7 +356,7 @@ int load_pacman(pacman_t *pacman, char *file_path) {
         }
         else if (strncmp(buffer, "POS", 3) == 0){
             sscanf(buffer, "POS %d %d", &pacman->pos_x, &pacman->pos_y);
-            printf("PACMAN POS: %d %d\n", pacman->pos_x, pacman->pos_y);
+            //printf("PACMAN POS: %d %d\n", pacman->pos_x, pacman->pos_y);
         }
         else if (buffer[0] == 'W' || buffer[0] == 'A' || buffer[0] == 'S' || buffer[0] == 'D' || buffer[0] == 'R'){
             pacman->moves[pacman->n_moves].command = buffer[0];//comando nem sempre vai estar no 0, ex: T 2
@@ -382,7 +384,7 @@ void put_creatures_on_board(board_t *new_board){
     for (int placed_pacmans = 0; placed_pacmans < new_board->n_pacmans; placed_pacmans++){
         new_board->board[position(new_board->pacmans[placed_pacmans].pos_y, new_board->pacmans[placed_pacmans].pos_x, new_board->width)].content = 'P';
         //new_board->board[position(new_board->pacmans[placed_pacmans].pos_y, new_board->pacmans[placed_pacmans].pos_x, new_board->width)].has_dot = 0;
-        //caso queira fazer ter um ponto no lugar aonde o pacman nasce
+        //caso queira fazer ter um ponto no lugar aonde o pacman
     }
 
     for (int placed_ghosts = 0; placed_ghosts < new_board->n_ghosts; placed_ghosts++){
@@ -399,22 +401,26 @@ int load_monster(ghost_t *monster, char *file_path) {
         return -1;
     }
     while (read_line(fd, buffer) != 0){
+        //printf("MONSTER LINE: \"%s\"\n", buffer);
         if (strncmp(buffer, "PASSO", 5) == 0){
             sscanf(buffer, "PASSO %d", &monster->passo);
         }
         else if (strncmp(buffer, "POS", 3) == 0){
             sscanf(buffer, "POS %d %d", &monster->pos_x, &monster->pos_y);
         }
-        else if (buffer[0] == 'W' || buffer[0] == 'A' || buffer[0] == 'S' || buffer[0] == 'D' || buffer[0] == 'R' || buffer[0] == 'T'){
+        else if (buffer[0] == 'W' || buffer[0] == 'A' || buffer[0] == 'S' || buffer[0] == 'D' || buffer[0] == 'R'){
+            //printf("MONSTER MOVE LINE: %s\n", buffer);
             monster->moves[monster->n_moves].command = buffer[0];
             monster->moves[monster->n_moves].turns = 1;
             monster->n_moves += 1;
         }
         else if (buffer[0] == 'T'){
+            //printf("MONSTER WAIT LINE: %s\n", buffer);
             monster->moves[monster->n_moves].command = buffer[0];
             sscanf(buffer, "T %d", &monster->moves[monster->n_moves].turns); 
             monster->moves[monster->n_moves].turns_left = monster->moves[monster->n_moves].turns;
             monster->n_moves += 1;
+            //printf("MONSTER WAIT TURNS: %d\n", monster->moves[monster->n_moves - 1].turns);
         }
     }
     monster->charged = 0;

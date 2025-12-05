@@ -12,7 +12,7 @@ POS 8 5
 # R (direcção aleatória), T (espera um número de jogadas), C (carregar)
 W
 R
-#T 3
+T 3
 R
 S
 R 
