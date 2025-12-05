@@ -14,6 +14,7 @@
 #define QUIT_GAME 2
 #define LOAD_BACKUP 3
 #define CREATE_BACKUP 4
+#define GAME_WON 5
 
 void screen_refresh(board_t * game_board, int mode) {
     debug("REFRESH\n");
@@ -24,7 +25,7 @@ void screen_refresh(board_t * game_board, int mode) {
 }
 
 
-void checkpoint_save(int *n_checkpoints) {
+int checkpoint_save(int *n_checkpoints) {
     terminal_cleanup();
     int pid = fork();
     if (pid == 0){
@@ -34,8 +35,15 @@ void checkpoint_save(int *n_checkpoints) {
     else if (pid > 0){
         int status;
         wait(&status);
+        if (WIFEXITED(status)) {
+            int son_end_state = WEXITSTATUS(status);
+            if (son_end_state == GAME_WON) {
+                return GAME_WON;
+            }
+        } 
         terminal_init();
     }
+    return CONTINUE_PLAY;
 }
 
 int no_checkpoints(int *n_checkpoints) {
@@ -185,13 +193,11 @@ int create_level(board_t* new_level, char* directory,char* level_file_path){
                 pacman_t pacman = {0};
                 load_pacman(&pacman, file_path);
 
-                new_level->pacmans = realloc(
-                    new_level->pacmans,
-                    sizeof(pacman_t) * (new_level->n_pacmans + 1)
-                );
 
+                new_level->pacmans = realloc(new_level->pacmans, sizeof(pacman_t) * (new_level->n_pacmans + 1));
                 strcpy(new_level->pacman_file, pacman_f);
                 new_level->pacmans[new_level->n_pacmans++] = pacman;
+
 
                 token = strtok_r(NULL, " \t\n", &next_pacman);
             }
@@ -228,19 +234,22 @@ int create_level(board_t* new_level, char* directory,char* level_file_path){
         else if (strncmp(buffer, "X", 1) == 0 || strncmp(buffer, "o", 1) == 0 || strncmp(buffer, "@", 1) == 0){
             column = 0;
             while(buffer[column] != '\0' && buffer[column] != '\n'){
-                if (buffer[column] == 'X'){
+                switch (buffer[column]){
+
+                
+                case 'X':
                     new_level->board[position(row, column, new_level->width)].content = 'W';
-                }
-                else if (buffer[column] == 'o'){
+                    break;
+                case 'o':
                     new_level->board[position(row, column, new_level->width)].content = '.';
                     new_level->board[position(row, column, new_level->width)].has_dot = 1;
-                }
+                    break;
                 
-                else if (buffer[column] == '@'){
+                case '@':
                     new_level->board[position(row, column, new_level->width)].content = buffer[column];
                     new_level->board[position(row, column, new_level->width)].has_portal = 1;
-                }
-                else {
+                    break;
+                default:
                     new_level->board[position(row, column, new_level->width)].content = buffer[column];
                 }
 
@@ -269,7 +278,7 @@ int create_level(board_t* new_level, char* directory,char* level_file_path){
     return 0;
 }
 
-/*int parse_level(board_t* levels, int* n_levels, char* dir_path, char* level_file_name){
+int parse_level(board_t** levels, int* n_levels, char* dir_path, char* level_file_name){
     char file_path[512];
     board_t new_level = {0};
 
@@ -281,11 +290,11 @@ int create_level(board_t* new_level, char* directory,char* level_file_path){
 
     strcpy(new_level.level_name, level_file_name); //copia o nome do ficheiro para a estrutura do board
 
-    levels = realloc(levels, (*n_levels + 1) * sizeof(board_t)); //realoca o array de strings para adicionar mais um nivel
+    *levels = realloc(*levels, (*n_levels + 1) * sizeof(board_t)); //realoca o array de strings para adicionar mais um nivel
 
-    levels[(*n_levels)++] = new_level; //adiciona o nome ao array de strings
+    (*levels)[(*n_levels)++] = new_level; //adiciona o nome ao array de strings
     return 0;
-}*/
+}
 
 
 int main(int argc, char** argv) {
@@ -302,6 +311,8 @@ int main(int argc, char** argv) {
     int n_levels = 0, checkpoints = 0;
 
     char* extension;
+
+    int end_state = CONTINUE_PLAY;
     
 
     if (argc != 2) {
@@ -313,6 +324,8 @@ int main(int argc, char** argv) {
     srand((unsigned int)time(NULL));
 
     open_debug_file("debug.log");
+
+    //printf("Initializing terminal...\n");
 
     terminal_init(); 
 
@@ -337,11 +350,11 @@ int main(int argc, char** argv) {
             continue;
         }
         else if(strcmp(extension,".lvl") == 0){
-            /*if(parse_level(levels, &n_levels, argv[1], file_entry->d_name) < 0){
+            if(parse_level(&levels, &n_levels, argv[1], file_entry->d_name) < 0){
                 perror("open");
                 closedir(dir);
                 return -1;
-            }*/
+            }/*
             char file_path[512];
             board_t new_level = {0};
 
@@ -355,6 +368,7 @@ int main(int argc, char** argv) {
             levels = realloc(levels, (n_levels + 1) * sizeof(board_t)); //realoca o array de strings para adicionar mais um nivel
 
             levels[(n_levels)++] = new_level; //adiciona o nome ao array de strings
+            */
         }
     }
 
@@ -379,6 +393,7 @@ int main(int argc, char** argv) {
                 curr_lvl++;
                 if (curr_lvl >= n_levels) {
                     end_game = true; //se acabarem os levels no filho, o pai tbm precisa acabar
+                    end_state = GAME_WON;
                 }
                 break;
             }
@@ -387,17 +402,22 @@ int main(int argc, char** argv) {
                 screen_refresh(&game_board, DRAW_GAME_OVER); 
                 sleep_ms(game_board.tempo);
                 end_game = true;
+                end_state = QUIT_GAME;
                 break;
             }
 
             if (result == CREATE_BACKUP){
-                checkpoint_save(&checkpoints);
+                if (checkpoint_save(&checkpoints) == GAME_WON){
+                    end_game = true;
+                    end_state = GAME_WON;
+                }
                 break;
             }
             if (result == LOAD_BACKUP){
                 screen_refresh(&game_board, DRAW_GAME_OVER); 
                 sleep_ms(game_board.tempo);
                 end_game = true;
+                end_state = LOAD_BACKUP;
                 break;
             }
     
@@ -417,5 +437,5 @@ int main(int argc, char** argv) {
 
     close_debug_file();
 
-    return 0;
+    return end_state;
 }
