@@ -6,6 +6,8 @@
 #define MAX_FILENAME 256
 #define MAX_GHOSTS 25
 
+#include <pthread.h>
+
 typedef enum {
     REACHED_PORTAL = 1,
     VALID_MOVE = 0,
@@ -28,6 +30,8 @@ typedef struct {
     int current_move;
     int n_moves; // number of predefined moves, 0 if controlled by user, >0 if readed from level file
     int waiting;
+    pthread_t pacman_lock;
+    int result;
 } pacman_t;
 
 typedef struct {
@@ -38,6 +42,7 @@ typedef struct {
     int current_move;
     int waiting;
     int charged;
+    pthread_t ghost_thread;
 } ghost_t;
 
 typedef struct {
@@ -57,7 +62,22 @@ typedef struct {
     char pacman_file[256];  // file with pacman movements
     char ghosts_files[MAX_GHOSTS][256]; // files with monster movements
     int tempo;              // Duration of each play XX
+    int running;
+    pthread_mutex_t board_lock; // mutex to protect the board during concurrent access
+    pthread_t lock_to_print; // mutex to protect the points during concurrent access
+    int* checkpoints;
+    int draw_state;
 } board_t;
+
+/*typedef struct {
+    board_t* board;
+    pthread_t *pacman_lock; //MUDAR NOME DPS
+} pacman_thread;*/
+
+typedef struct {
+    board_t* board;
+    int id; //MUDAR NOME DPS
+} ghost_thread;
 
 /*Makes the current thread sleep for 'int milliseconds' miliseconds*/
 void sleep_ms(int milliseconds);
@@ -107,5 +127,11 @@ void print_board(board_t* board);
 int read_line(int file,char* buffer);
 
 int position(int row, int column, int width);
+
+void* pacman_thread_func(void *arg);
+
+void* ghost_thread_func(void *arg);
+
+void *screen_refresh_thread(void *arg);
 
 #endif
