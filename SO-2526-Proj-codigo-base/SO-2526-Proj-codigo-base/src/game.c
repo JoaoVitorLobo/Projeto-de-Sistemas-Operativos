@@ -358,7 +358,7 @@ void *pacman_thread_func(void *arg) {
         }
         else
             board->pacmans[0].result = QUIT_GAME;
-    sleep_ms(board->tempo);
+        sleep_ms(board->tempo);
     }
     return NULL;
 }
@@ -381,10 +381,11 @@ void *screen_refresh_thread(void *arg){
     board_t* board = (board_t*) arg;
     while(board->running){
         pthread_mutex_lock(&board->board_lock);
-        screen_refresh(board,board->draw_state);
+        draw_board(board,board->draw_state);
+        refresh_screen();
         pthread_mutex_unlock(&board->board_lock);
+        sleep_ms(board->tempo);
     }
-    sleep_ms(board->tempo);
     return NULL;
 }
 
@@ -474,9 +475,10 @@ int main(int argc, char** argv) {
         game_board.pacmans[0].points = accumulated_points;
         game_board.running = 1;
         game_board.checkpoints = &checkpoints;
+        game_board.draw_state = DRAW_MENU;
         pthread_mutex_init(&game_board.board_lock,NULL);
         //game_board.checkpoints = checkpoints;
-        draw_board(&game_board, DRAW_MENU);
+        draw_board(&game_board, game_board.draw_state);
         refresh_screen();
         for(int i = 0; i < game_board.n_ghosts; i++) {
             ghost_thread g_thread;
@@ -536,7 +538,7 @@ int main(int argc, char** argv) {
         pthread_mutex_lock(&game_board.board_lock);
         game_board.running = 0; // nao tenho a certeza se deveria ser aqui ou depois do print board
         print_board(&game_board);
-        sleep(game_board.tempo);
+        //sleep(game_board.tempo);
         pthread_mutex_unlock(&game_board.board_lock);
         
         
