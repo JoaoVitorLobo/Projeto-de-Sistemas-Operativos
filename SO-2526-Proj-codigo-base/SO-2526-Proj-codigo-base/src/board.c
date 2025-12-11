@@ -467,7 +467,7 @@ int load_monster(ghost_t *monster, char *file_path) {
 }
 */
 void unload_level(board_t * board) {
-    for(int i= 0; i< board->n_ghosts;i++){
+    for(int i= 0; i< board->n_ghosts;i++){ 
         pthread_join(board->ghosts[i].ghost_thread,NULL);
     }
     pthread_join(board->pacmans[0].pacman_lock,NULL);

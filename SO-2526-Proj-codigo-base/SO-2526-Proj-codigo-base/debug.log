@@ -1,14 +1,14 @@
 KEY D
-KEY S
-KEY S
-KEY D
 KEY D
 KEY D
 KEY S
-KEY S
+KEY D
 KEY S
 KEY D
-=== [1625] LEVEL INFO ===
+KEY S
+KEY S
+KEY S
+=== [85071] LEVEL INFO ===
 Dimensions: 8 x 8
 Tempo: 100
 Pacman file: 
@@ -17,15 +17,14 @@ Monster files (1):
 
 === BOARD ===
 WWWWWWWW
-W  ....W
-W. ....W
-W.    .W
-W.... .W
-WM    .W
-W     PW
+W    ..W
+W...  .W
+W....  W
+W..... W
+WM   . W
+W    .PW
 WWWWWWWW
 ==================
-KEY S
 KEY D
 KEY D
 KEY S
@@ -33,14 +32,13 @@ KEY D
 KEY S
 KEY S
 KEY S
+KEY D
 KEY S
 KEY S
 KEY D
 KEY D
-KEY W
 KEY D
-KEY D
-=== [1625] LEVEL INFO ===
+=== [85071] LEVEL INFO ===
 Dimensions: 10 x 10
 Tempo: 100
 Pacman file: 
@@ -50,14 +48,13 @@ Monster files (2):
 
 === BOARD ===
 WWWWWWWWWW
-W .......W
 W   .....W
 W..  ....W
-W    ....W
-W    ...MW
-W    ....W
-WM   .  PW
-W      ..W
+WM.. ....W
+W  . ....W
+W     ..MW
+W     ...W
+W       PW
+W .......W
 WWWWWWWWWW
 ==================
-KEY D

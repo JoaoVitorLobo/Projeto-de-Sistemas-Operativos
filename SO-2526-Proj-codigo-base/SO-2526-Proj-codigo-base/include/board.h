@@ -43,6 +43,7 @@ typedef struct {
     int waiting;
     int charged;
     pthread_t ghost_thread;
+    int id;
 } ghost_t;
 
 typedef struct {
@@ -67,17 +68,18 @@ typedef struct {
     pthread_t lock_to_print; // mutex to protect the points during concurrent access
     int* checkpoints;
     int draw_state;
+    void** g_threads;
 } board_t;
+
+typedef struct{
+    board_t* board;
+    int id;
+}ghost_thread;
 
 /*typedef struct {
     board_t* board;
     pthread_t *pacman_lock; //MUDAR NOME DPS
 } pacman_thread;*/
-
-typedef struct {
-    board_t* board;
-    int id; //MUDAR NOME DPS
-} ghost_thread;
 
 /*Makes the current thread sleep for 'int milliseconds' miliseconds*/
 void sleep_ms(int milliseconds);
