@@ -29,7 +29,6 @@ int checkpoint_save(int *n_checkpoints,board_t* board) {
     pthread_mutex_lock(&board->board_lock);
 
     board->running = 0; // threads morrem
-
     pthread_mutex_unlock(&board->board_lock);
 
     for(int i= 0; i< board->n_ghosts;i++){ 
@@ -41,7 +40,7 @@ int checkpoint_save(int *n_checkpoints,board_t* board) {
 
     int pid = fork();
     if (pid == 0){
-        (*n_checkpoints)++;
+        (*n_checkpoints)=1;
         terminal_init();
         refresh_screen();
     }
@@ -544,6 +543,7 @@ int main(int argc, char** argv) {
                     end_state = QUIT_GAME;
                 }
                 else{
+                    (*game_board->checkpoints) = 0;
                     end_state = LOAD_BACKUP;
                 }
                 break;
@@ -561,16 +561,9 @@ int main(int argc, char** argv) {
         //sleep(game_board.tempo);
         pthread_mutex_unlock(&game_board->board_lock);
         
-        
-    }    
 
-    while (curr_lvl>=0){
-        for(int i= 0; i< levels[curr_lvl].n_ghosts;i++){ 
-            pthread_join(levels[curr_lvl].ghosts[i].ghost_thread,NULL);
-        }
-        pthread_join(levels[curr_lvl].pacmans[0].pacman_lock,NULL);
-        pthread_join(levels[curr_lvl].lock_to_print, NULL);
-        pthread_mutex_destroy(&levels[curr_lvl].board_lock);
+    }    
+    while (curr_lvl>=0 && curr_lvl<n_levels){
 
         for (int i= 0;i<levels[curr_lvl].n_ghosts;i++){
             free(levels[curr_lvl].g_threads[i]);
