@@ -30,7 +30,8 @@ typedef struct {
     int current_move;
     int n_moves; // number of predefined moves, 0 if controlled by user, >0 if readed from level file
     int waiting;
-    pthread_t pacman_lock;
+    pthread_t pacman_thread;
+    pthread_mutex_t pacman_lock;
     int result;
 } pacman_t;
 
@@ -65,10 +66,11 @@ typedef struct {
     int tempo;              // Duration of each play XX
     int running;
     pthread_mutex_t board_lock; // mutex to protect the board during concurrent access
-    pthread_t lock_to_print; // mutex to protect the points during concurrent access
+    pthread_t board_thread; // mutex to protect the points during concurrent access
     int* checkpoints;
     int draw_state;
     void** g_threads;
+    pthread_mutex_t ncurses_lock;
 } board_t;
 
 typedef struct{
@@ -78,7 +80,7 @@ typedef struct{
 
 /*typedef struct {
     board_t* board;
-    pthread_t *pacman_lock; //MUDAR NOME DPS
+    pthread_t *pacman_thread; //MUDAR NOME DPS
 } pacman_thread;*/
 
 /*Makes the current thread sleep for 'int milliseconds' miliseconds*/

@@ -1,60 +1,153 @@
+GHOST THREAD
+PACMAN THREAD
+GHOST THREAD
+GHOST THREAD
+PACMAN THREAD
+GHOST THREAD
+KEY S
+KEY S
+KEY S
+KEY S
+KEY S
+KEY S
+KEY S
+KEY S
+KEY S
+KEY S
+KEY S
+KEY S
+KEY S
+KEY S
+KEY G
+pacman->result = CREATE_BACKUP
+result == ???
+result == CREATE BACKUP (MAIN)
+SON FROM CHECKPOINT
+Level ended...
+GHOST THREAD
+GHOST THREAD
+PACMAN THREAD
+PACMAN THREAD
+GHOST THREAD
+GHOST THREAD
 KEY D
+KEY D
+KEY D
+KEY D
+KEY D
+KEY D
+KEY D
+KEY D
+KEY W
+pacman->result = NEXT_LEVEL
+result == ???
+result == NEXT LEVEL (MAIN)
+Level ended...
+GHOST THREAD
+GHOST THREAD
+PACMAN THREAD
+PACMAN THREAD
 KEY D
 KEY D
 KEY D
 KEY S
 KEY S
+KEY S
+KEY S
 KEY D
-KEY S
-KEY S
-KEY S
-=== [95382] LEVEL INFO ===
-Dimensions: 8 x 8
-Tempo: 100
-Pacman file: 
-Monster files (1):
-  - monster1.m
+Killing 0 pacman
 
-=== BOARD ===
-WWWWWWWW
-W     .W
-W.... .W
-W....  W
-W..... W
-WM   . W
-W    .PW
-WWWWWWWW
-==================
+pacman->result = LOAD_BACKUP
+KEY D
+pacman->result = LOAD_BACKUP
+result == ???
+result == LOAD BACKUP (MAIN)
+Level ended...
+Game ended, freeing...
+Unload levels
+Freed board resources
+Freed board resources
+Free levels
+Terminal cleanup
+BACK FROM CHECKPOINT
+Level ended...
+GHOST THREAD
+GHOST THREAD
+GHOST THREAD
+GHOST THREAD
+PACMAN THREAD
+PACMAN THREAD
 KEY D
 KEY D
+KEY D
+KEY D
+KEY D
+KEY D
+KEY W
+pacman->result = NEXT_LEVEL
+KEY W
+pacman->result = NEXT_LEVEL
+result == ???
+result == NEXT LEVEL (MAIN)
+Level ended...
+GHOST THREAD
+GHOST THREAD
+PACMAN THREAD
+PACMAN THREAD
+KEY D
+KEY D
+KEY D
+KEY D
+KEY D
+KEY G
+pacman->result = CREATE_BACKUP
+result == ???
+result == CREATE BACKUP (MAIN)
+SON FROM CHECKPOINT
+Level ended...
+GHOST THREAD
+PACMAN THREAD
+PACMAN THREAD
+GHOST THREAD
 KEY S
-KEY D
-KEY D
 KEY S
 KEY S
 KEY S
-KEY S
-KEY S
-KEY D
-KEY D
-KEY D
-=== [95382] LEVEL INFO ===
-Dimensions: 10 x 10
-Tempo: 100
-Pacman file: 
-Monster files (2):
-  - monster1.m
-  - monster2.m
+KEY A
+KEY A
+Killing 0 pacman
 
-=== BOARD ===
-WWWWWWWWWW
-W   .....W
-W     ...W
-WM    ...W
-W     ...W
-W     ..MW
-W.... ...W
-W....   PW
-W........W
-WWWWWWWWWW
-==================
+pacman->result = LOAD_BACKUP
+result == ???
+result == LOAD BACKUP (MAIN)
+Level ended...
+Game ended, freeing...
+Unload levels
+Freed board resources
+Freed board resources
+Free levels
+Terminal cleanup
+BACK FROM CHECKPOINT
+Level ended...
+GHOST THREAD
+GHOST THREAD
+PACMAN THREAD
+PACMAN THREAD
+KEY S
+KEY S
+KEY S
+KEY A
+KEY A
+KEY W
+Killing 0 pacman
+
+pacman->result = QUIT_GAME
+result == ???
+result == QUIT GAME (MAIN)
+Level ended...
+Game ended, freeing...
+Unload levels
+Freed board resources
+Freed board resources
+Free levels
+Terminal cleanup
