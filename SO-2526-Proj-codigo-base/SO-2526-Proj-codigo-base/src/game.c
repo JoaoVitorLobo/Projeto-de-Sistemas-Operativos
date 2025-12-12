@@ -578,7 +578,7 @@ int main(int argc, char** argv) {
                 g_thread->id = i;
                 game_board->g_threads[i] = g_thread;
                     pthread_create(&game_board->ghosts[i].ghost_thread, NULL, ghost_thread_func,g_thread);
-            }
+            } 
             pthread_create(&game_board->pacmans[0].pacman_thread, NULL, pacman_thread_func, game_board);
 
             pthread_create(&game_board->board_thread,NULL,screen_refresh_thread,game_board);
