@@ -468,24 +468,9 @@ int load_monster(ghost_t *monster, char *file_path) {
 }
 */
 void unload_level(board_t * board) {
-    /*for(int i= 0; i< board->n_ghosts;i++){ 
-        pthread_join(board->ghosts[i].ghost_thread,NULL);
-        debug("Joined ghost %d thread\n", i);
-    }
-    //pthread_join(board->pacmans[0].pacman_thread,NULL);
-    debug("Joined pacman thread\n");
-    pthread_mutex_destroy(&board->pacmans[0].pacman_lock);
-
-    pthread_join(board->board_thread, NULL);
-    debug("Joined board thread\n");
-    pthread_mutex_destroy(&board->board_lock);
-    pthread_mutex_destroy(&board->ncurses_lock);
-    debug("Destroyed mutex\n");*/
-
     free(board->board);
     free(board->pacmans);
     free(board->ghosts);
-    debug("Freed board resources\n");
 }
 
 void open_debug_file(char *filename) {
