@@ -34,14 +34,23 @@ int checkpoint_save(int *n_checkpoints,board_t* board) {
     pthread_mutex_unlock(&board->board_lock);
 
     for(int i= 0; i< board->n_ghosts;i++){ 
+        debug("HELP\n");
+
         pthread_join(board->ghosts[i].ghost_thread,NULL);
+        debug("I need somebody\n");
+        
     }
     pthread_join(board->pacmans[0].pacman_thread,NULL);
     pthread_join(board->board_thread, NULL);
 
+    debug("All threads joined for checkpoint\n");
+
+    debug("Before fork\n");
     int pid = fork();
+    debug("After fork\n");
+
     if (pid == 0){
-        (*n_checkpoints)++;
+        (*n_checkpoints) = 1;
         terminal_init();
         /*for(int i = 0; i < board->n_ghosts; i++) {
             ghost_thread* g_thread = malloc(sizeof(ghost_thread));
@@ -52,13 +61,15 @@ int checkpoint_save(int *n_checkpoints,board_t* board) {
         }
         pthread_create(&board->pacmans[0].pacman_thread, NULL, pacman_thread_func, board);
 
-        pthread_create(&board->board_thread,NULL,screen_refresh_thread,board);*/
+        pthread_create(&board->board_thread,NULL,screen_refresh_thread,board);
 
-        pthread_mutex_unlock(&board->board_lock);
+        pthread_mutex_unlock(&board->board_lock);*/
+
         debug("SON FROM CHECKPOINT\n");
         return CONTINUE_PLAY;
     }
     else if (pid > 0){
+        (*n_checkpoints) = 0;
         int status;
         wait(&status);
         if (WIFEXITED(status)) {
@@ -390,26 +401,20 @@ void *pacman_thread_func(void *arg) {
 
         if (play->command ==  'G'){
             if (no_checkpoints(board->checkpoints)){
+                board->running = 0;
                 pthread_mutex_lock(&pacman->pacman_lock);
                 debug("pacman->result = CREATE_BACKUP\n");
                 pacman->result = CREATE_BACKUP;
-                board->running = 0;
                 pthread_mutex_unlock(&pacman->pacman_lock);
+                return NULL;            
             }
-            else{
-                pthread_mutex_lock(&pacman->pacman_lock);
-                debug("pacman->result = CONTINUE_PLAY\n");
-                pacman->result = CONTINUE_PLAY;
-                pthread_mutex_unlock(&pacman->pacman_lock);
-            }
-            return NULL;
         }
 
         if (play->command == 'Q') {
+            board->running = 0;
             pthread_mutex_lock(&pacman->pacman_lock);
             debug("pacman->result = QUIT_GAME\n");
             pacman->result = QUIT_GAME;
-            board->running = 0;
             pthread_mutex_unlock(&pacman->pacman_lock);
             return NULL;
         }
@@ -422,33 +427,34 @@ void *pacman_thread_func(void *arg) {
 
         if (pacman->result == REACHED_PORTAL) {
             // Next level
+            board->running = 0;
             pthread_mutex_lock(&pacman->pacman_lock);
             debug("pacman->result = NEXT_LEVEL\n");
             pacman->result = NEXT_LEVEL;
-            board->running = 0;
             pthread_mutex_unlock(&pacman->pacman_lock);
             return NULL;
         }
 
         if(pacman->result == DEAD_PACMAN) {
+            board->running = 0;
             if (no_checkpoints(board->checkpoints)){
                 pthread_mutex_lock(&pacman->pacman_lock);
                 debug("pacman->result = QUIT_GAME\n");
                 pacman->result = QUIT_GAME;
-                board->running = 0;
                 pthread_mutex_unlock(&pacman->pacman_lock);
             }
             else{
                 pthread_mutex_lock(&pacman->pacman_lock);
                 debug("pacman->result = LOAD_BACKUP\n");
                 pacman->result = LOAD_BACKUP;
-                board->running = 0;
                 pthread_mutex_unlock(&pacman->pacman_lock);
             }
             return NULL;
         }
 
-        sleep_ms(board->tempo);
+        //sleep_ms(board->tempo);
+
+        debug("board->running = %d\n", board->running);
         
     }
     
@@ -558,17 +564,6 @@ int main(int argc, char** argv) {
         draw_board(game_board, game_board->draw_state);
         refresh_screen();
 
-        for(int i = 0; i < game_board->n_ghosts; i++) {
-            ghost_thread* g_thread = malloc(sizeof(ghost_thread));
-            g_thread->board = game_board;
-            g_thread->id = i;
-            game_board->g_threads[i] = g_thread;
-            pthread_create(&game_board->ghosts[i].ghost_thread, NULL, ghost_thread_func,g_thread);
-        }
-        pthread_create(&game_board->pacmans[0].pacman_thread, NULL, pacman_thread_func, game_board);
-
-        pthread_create(&game_board->board_thread,NULL,screen_refresh_thread,game_board);
-
 
 
         while(true) {
@@ -577,20 +572,26 @@ int main(int argc, char** argv) {
                 g_thread->board = game_board;
                 g_thread->id = i;
                 game_board->g_threads[i] = g_thread;
-                    pthread_create(&game_board->ghosts[i].ghost_thread, NULL, ghost_thread_func,g_thread);
+                pthread_create(&game_board->ghosts[i].ghost_thread, NULL, ghost_thread_func,g_thread);
             } 
             pthread_create(&game_board->pacmans[0].pacman_thread, NULL, pacman_thread_func, game_board);
 
             pthread_create(&game_board->board_thread,NULL,screen_refresh_thread,game_board);
 
+            debug("THREADS CREATED\n");
+
 
             for (int i = 0; i < game_board->n_ghosts; i++) {
                 pthread_join(game_board->ghosts[i].ghost_thread, NULL);
+                debug("Joined ghost %d thread\n", i);
             }
             pthread_join(game_board->pacmans[0].pacman_thread, NULL);
+            debug("Joined pacman thread\n");
             pthread_join(game_board->board_thread, NULL);
+            debug("Joined board thread\n");
 
             //pthread_mutex_lock(&game_board->pacmans[0].pacman_lock);
+            debug("%d\n", game_board->pacmans[0].result);
             int result = game_board->pacmans[0].result;
 
             debug("result == ???\n");
@@ -603,10 +604,10 @@ int main(int argc, char** argv) {
                     end_game = true; //se acabarem os levels no filho, o pai tbm precisa acabar
                     end_state = GAME_WON;
                     game_board->draw_state = DRAW_WIN;
-                    game_board->running = 0; 
+                    game_board->running = 0;   
                     //screen_refresh(&game_board, draw_state);
                 }
-
+                accumulated_points = game_board->pacmans[0].points;  
                 //game_board->pacmans[0].result = CONTINUE_PLAY;
                 //pthread_mutex_unlock(&game_board->pacmans[0].pacman_lock);
                 break;
@@ -622,6 +623,7 @@ int main(int argc, char** argv) {
                     screen_refresh(game_board, DRAW_GAME_OVER);
                 }
                 game_board->running = 0; 
+                accumulated_points = game_board->pacmans[0].points;  
                 //game_board->pacmans[0].result = CONTINUE_PLAY;
                 //pthread_mutex_unlock(&game_board->pacmans[0].pacman_lock);
                 break;
@@ -634,6 +636,7 @@ int main(int argc, char** argv) {
                     end_state = GAME_WON;
                 }
                 game_board->running = 0; 
+                accumulated_points = game_board->pacmans[0].points;  
                 //game_board->pacmans[0].result = CONTINUE_PLAY;
                 //pthread_mutex_unlock(&game_board->pacmans[0].pacman_lock);
                 break;
@@ -648,6 +651,7 @@ int main(int argc, char** argv) {
                 end_state = LOAD_BACKUP;
 
                 game_board->running = 0; 
+                accumulated_points = game_board->pacmans[0].points;  
                 //game_board->pacmans[0].result = CONTINUE_PLAY;
                 //pthread_mutex_unlock(&game_board->pacmans[0].pacman_lock);
 
@@ -656,7 +660,7 @@ int main(int argc, char** argv) {
             //pthread_mutex_unlock(&game_board->pacmans[0].pacman_lock);
     
             //screen_refresh(&game_board, game_board.draw_state); 
-
+            debug("result == CONTINUE_PLAY (MAIN)\n");
             game_board->pacmans[0].result = CONTINUE_PLAY;
             accumulated_points = game_board->pacmans[0].points;      
         }
